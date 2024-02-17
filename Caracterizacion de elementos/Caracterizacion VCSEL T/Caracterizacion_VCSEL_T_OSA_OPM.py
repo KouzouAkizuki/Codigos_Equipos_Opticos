@@ -28,10 +28,10 @@ print("Date and time =", dt_string)
 
 ############################# VCSEL-T Source Parameters #########################
 
-visa_VCSELsource='ASRL3::INSTR'  # Nombre del recurso VISA
+visa_VCSELsource='ASRL4::INSTR'  # Nombre del recurso VISA
 
 temp_set = 562                  # [412 612][35 15]  512 -> 25°C, 562 -> 20°C Temperatura [°C] del laser segun formula: ###########
-current = 18                    # Corriente del laser [mA] [xx.x]
+current = 17                    # Corriente del laser [mA] [xx.x]
 
 Vcsel_mode=0
 
@@ -41,13 +41,13 @@ Voltage_step=1
 
 ############################# OSA parameters #########################
 
-visa_OSA ='ASRL5::INSTR'    #Nombre del recurso VISA
+visa_OSA ='ASRL3::INSTR'    #Nombre del recurso VISA
 
 OSA_display = "ON"          #Enciente/Apaga el display del OSA
 fiber_conector = "ANGLED"   #Tipo de fibra
 
-wavelength_center = 1545    #Longitud de onda central   [nm]
-wavelength_span = 11        #Span de medicion   [nm]  ->  Lamda +- SPAN   
+wavelength_center = 1553    #Longitud de onda central   [nm]
+wavelength_span = 10        #Span de medicion   [nm]  ->  Lamda +- SPAN   
 
 osa_resolution = 20         #Resolucion de medicion del OSA [pm]
 osa_sensitivity = "MID"     #Sensibilidad del OSA

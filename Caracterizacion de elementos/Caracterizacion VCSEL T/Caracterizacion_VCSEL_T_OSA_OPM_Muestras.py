@@ -28,10 +28,10 @@ print("Date and time =", dt_string)
 
 ############################# VCSEL-T Source Parameters #########################
 
-visa_VSELsource='ASRL3::INSTR'  # Nombre del recurso VISA
+visa_VSELsource='ASRL4::INSTR'  # Nombre del recurso VISA
 
-temp_set = 512                  # Temperatura [°C] del laser segun formula: ###########
-current = 18                    # Corriente del laser [mA]
+temp_set = 562                  # Temperatura [°C] del laser segun formula: ###########
+current = 17                    # Corriente del laser [mA]
 
 Vcsel_mode=0
 
@@ -41,13 +41,13 @@ Voltage_step=1
 
 ############################# OSA parameters #########################
 
-visa_OSA ='ASRL5::INSTR'    #Nombre del recurso VISA
+visa_OSA ='ASRL3::INSTR'    #Nombre del recurso VISA
 
 OSA_display = "ON"          #Enciente/Apaga el display del OSA
 fiber_conector = "ANGLED"   #Tipo de fibra
 
-wavelength_center = 1550    #Longitud de onda central   [nm]
-wavelength_span = 7        #Span de medicion   [nm]  ->  Lamda +- SPAN   
+wavelength_center = 1553    #Longitud de onda central   [nm]
+wavelength_span = 13        #Span de medicion   [nm]  ->  Lamda +- SPAN   
 
 osa_resolution = 20         #Resolucion de medicion del OSA [pm]
 osa_sensitivity = "MID"     #Sensibilidad del OSA
@@ -60,7 +60,7 @@ sweep_speed = "2x"          #Velocidad de medicion
 
 ############################# OPM parameters #########################
 
-visa_OPM='USB0::0x1313::0x8078::P0023445::INSTR'    #Nombre del recurso VISA
+visa_OPM='USB0::0x1313::0x8078::P0025035::INSTR'    #Nombre del recurso VISA
 
 muestras_prom=1
 
@@ -77,8 +77,11 @@ def Config_VCSEL_T(Instrumento,Temperatura,Base_Tension,VCSEL_SWEEP_Mode):
     vcsel_T.timeout = 25000
 
     vcsel_T.write("SETT:"+str(int(Temperatura)))   #Establece la temperatura, numero entre #412 a #612 -> 35 a 15
+    time.sleep(1)
     vcsel_T.write("SETC:"+str(round(float(0),1))) #Establece la corriente en #xx.xmA 
+    time.sleep(1)
     vcsel_T.write("SETDC:"+str(int(Base_Tension)))   #Establece la tension #000 a #999  -> 0v a -20v
+    time.sleep(1)
     vcsel_T.write("SETM:"+str(int(VCSEL_SWEEP_Mode)))   #Establece modo de barrido #0:DC,   #1:Internal Trigger,   #2:External Trigger
 
     return vcsel_T
@@ -133,7 +136,9 @@ def VCSEL_Current_Sweep(Recurso_VCSEL_T,Min_Voltaje,Max_Voltaje,Step_Voltaje,Rec
 
 
     Recurso_VCSEL_T.write("SETDC:"+str(int(Min_Voltaje)))   #Establece la tension #000 a #999  -> 0v a -20v
+    time.sleep(1)
     Recurso_VCSEL_T.write("SETC:"+str(round(float(Base_Current),1))) #Establece la corriente en #xx.xmA 
+    time.sleep(1)
 
     for i in np.arange(Min_Voltaje,Max_Voltaje,Step_Voltaje):   #Barrido de corriente
         Recurso_VCSEL_T.write("SETDC:"+str(int(i)))   #Establece la tension #000 a #999  -> 0v a -20v
@@ -172,7 +177,7 @@ def VCSEL_Current_Sweep(Recurso_VCSEL_T,Min_Voltaje,Max_Voltaje,Step_Voltaje,Rec
 rm = pyvisa.ResourceManager()
 
 ###### Configuracion de la fuente de corriente de Thorlabs
-VCSEL_T=Config_VCSEL_T(visa_OSA,temp_set,Voltage_min,Vcsel_mode)
+VCSEL_T=Config_VCSEL_T(visa_VSELsource,temp_set,Voltage_min,Vcsel_mode)
 
 ###### Configuracion del analizador de espectros optico
 OSA=Config_OSA_Yokogawa(visa_OSA,OSA_display,wavelength_center,wavelength_span,osa_resolution,osa_sensitivity,level_offset,level_ref,sweep_mode,sweep_speed)
@@ -183,20 +188,22 @@ OPM=Config_OPM_Thorlabs(visa_OPM,muestras_prom)
 ###### Mediciones 
 for i in range(1,Repeticiones+1):
     
-    Tiempo,Corriente,Voltaje_Barrido,Longitud_Onda,Potencia=VCSEL_Current_Sweep(VCSEL_T,Voltage_min,Voltage_max,Voltage_step,OSA,OPM,current)
+    Tiempo,Voltaje_Barrido,Longitud_Onda,Potencia=VCSEL_Current_Sweep(VCSEL_T,Voltage_min,Voltage_max,Voltage_step,OSA,OPM,current)
 
     ####################### Data to .csv ##########################
-    filename = "VCSEL_1550_T_Caracterizacion_"+dt_string+"_Temp_"+str(temp_set)+"_Voltaje_Step_"+str(Voltage_step)+"_OPM_OSA"+str(i)+".csv"
+    filename = "VCSEL_1558_T_Caracterizacion_"+dt_string+"_Temp_"+str(temp_set)+"_Voltaje_Step_"+str(Voltage_step)+"_OPM_OSA"+str(i)+".csv"
     file = open(filename,"w")
     file.write("Time,Voltaje_Ideal,Wavelength,Power\n")
     for s in range(len(Tiempo)-1):
         file.write(str(Tiempo[s])+","+str(Voltaje_Barrido[s])+","+str(Longitud_Onda[s])+","+str(Potencia[s])+"\n")
     file.close()
-    
-    plt.plot(Corriente, Longitud_Onda)
+  
+    ####################### Plotting ##########################
+
+    plt.plot(Voltaje_Barrido, Longitud_Onda)
     plt.show()
 
-    plt.plot(Corriente, Potencia)
+    plt.plot(Voltaje_Barrido, Potencia)
     plt.show()
 
      
@@ -206,13 +213,6 @@ OPM.close()
 VCSEL_T.close()
 
 
-####################### Plotting ##########################
-
-plt.plot(Voltaje_Barrido, Longitud_Onda)
-plt.show()
-
-plt.plot(Voltaje_Barrido, Potencia)
-plt.show()
 
 
 
